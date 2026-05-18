@@ -44,20 +44,20 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3"
   },
- "scripts": {
-  "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "lint": "tsc --noEmit",
-  "test": "cross-env NODE_ENV=test jest --runInBand --forceExit",
-  "test:watch": "cross-env NODE_ENV=test jest --watch",
-  "test:coverage": "cross-env NODE_ENV=test jest --coverage --forceExit",
-  "docker:build": "docker-compose build",
-  "docker:up": "docker-compose up -d",
-  "docker:down": "docker-compose down",
-  "docker:logs": "docker-compose logs -f app",
-  "docker:restart": "docker-compose restart app"
-},
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "tsc --noEmit",
+    "test": "cross-env NODE_ENV=test jest --runInBand --forceExit",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage --forceExit",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f app",
+    "docker:restart": "docker-compose restart app"
+  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
