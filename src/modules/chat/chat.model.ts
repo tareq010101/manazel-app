@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IChat extends Document {
   _id: Types.ObjectId;
+  company: Types.ObjectId;
   participants: Types.ObjectId[];
   contract: Types.ObjectId;
   lastMessage?: Types.ObjectId;
@@ -12,6 +13,11 @@ export interface IChat extends Document {
 
 const chatSchema = new Schema<IChat>(
   {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'الشركة مطلوبة'],
+    },
     participants: [
       {
         type: Schema.Types.ObjectId,
@@ -28,13 +34,11 @@ const chatSchema = new Schema<IChat>(
       type: Schema.Types.ObjectId,
       ref: 'Message',
     },
-    lastMessageAt: {
-      type: Date,
-    },
+    lastMessageAt: { type: Date },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
+chatSchema.index({ company: 1, participants: 1 });
 
 export const ChatModel = mongoose.model<IChat>('Chat', chatSchema);

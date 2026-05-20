@@ -5,6 +5,7 @@ export type MaintenanceStatus = 'pending' | 'in_progress' | 'completed' | 'rejec
 
 export interface IMaintenance extends Document {
   _id: Types.ObjectId;
+  company: Types.ObjectId;
   unit: Types.ObjectId;
   property: Types.ObjectId;
   landlord: Types.ObjectId;

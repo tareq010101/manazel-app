@@ -10,26 +10,26 @@ const notificationService = new NotificationService();
 export class PaymentService {
   private async verifyContract(
     contractId: string,
-    landlordId: string
+    landlordId: string,
+    companyId: string
   ): Promise<any> {
     const contract = await ContractModel.findOne({
       _id: contractId,
       landlord: landlordId,
+      company: companyId,
       status: 'active',
     });
 
-    if (!contract) {
-      throw ApiError.notFound('العقد مش موجود أو مش فعال');
-    }
-
+    if (!contract) throw ApiError.notFound('العقد مش موجود أو مش فعال');
     return contract;
   }
 
   async create(
     landlordId: string,
+    companyId: string,
     dto: CreatePaymentDTO
   ): Promise<IPayment> {
-    const contract = await this.verifyContract(dto.contractId, landlordId);
+    const contract = await this.verifyContract(dto.contractId, landlordId, companyId);
 
     const payment = await PaymentModel.create({
       contract: dto.contractId,
@@ -37,6 +37,7 @@ export class PaymentService {
       property: contract.property,
       landlord: landlordId,
       tenant: contract.tenant,
+      company: companyId,
       type: dto.type,
       amount: dto.amount,
       dueDate: dto.dueDate,
@@ -58,83 +59,68 @@ export class PaymentService {
 
   async markAsPaid(
     paymentId: string,
-    landlordId: string
+    landlordId: string,
+    companyId: string
   ): Promise<IPayment> {
     const payment = await PaymentModel.findOneAndUpdate(
-      {
-        _id: paymentId,
-        landlord: landlordId,
-        status: 'pending',
-      },
-      {
-        status: 'paid',
-        paidAt: new Date(),
-      },
+      { _id: paymentId, landlord: landlordId, company: companyId, status: 'pending' },
+      { status: 'paid', paidAt: new Date() },
       { new: true }
     ).populate('tenant', 'name');
 
-    if (!payment) {
-      throw ApiError.notFound('الدفعة مش موجودة أو تم دفعها بالفعل');
-    }
+    if (!payment) throw ApiError.notFound('الدفعة مش موجودة أو تم دفعها بالفعل');
 
     const tenantName = (payment.tenant as any)?.name ?? 'المستأجر';
-    await notificationService.notifyPaymentReceived(
-      landlordId,
-      tenantName,
-      payment.amount
-    );
+    await notificationService.notifyPaymentReceived(landlordId, tenantName, payment.amount);
 
     return payment;
   }
 
   async markOverdue(): Promise<void> {
     await PaymentModel.updateMany(
-      {
-        status: 'pending',
-        dueDate: { $lt: new Date() },
-      },
+      { status: 'pending', dueDate: { $lt: new Date() } },
       { status: 'overdue' }
     );
   }
 
   async getAllByLandlord(
     landlordId: string,
+    companyId: string,
     status?: string
   ): Promise<IPayment[]> {
-    const filter: any = { landlord: landlordId };
+    const filter: any = { landlord: landlordId, company: companyId };
     if (status) filter.status = status;
 
-    const payments = await PaymentModel.find(filter)
+    return PaymentModel.find(filter)
       .populate('tenant', 'name email phone')
       .populate('unit', 'unitNumber floor')
       .populate('property', 'name address')
       .sort({ dueDate: -1 });
-
-    return payments;
   }
 
   async getAllByTenant(
     tenantId: string,
+    companyId: string,
     status?: string
   ): Promise<IPayment[]> {
-    const filter: any = { tenant: tenantId };
+    const filter: any = { tenant: tenantId, company: companyId };
     if (status) filter.status = status;
 
-    const payments = await PaymentModel.find(filter)
+    return PaymentModel.find(filter)
       .populate('landlord', 'name email phone')
       .populate('unit', 'unitNumber floor')
       .populate('property', 'name address')
       .sort({ dueDate: -1 });
-
-    return payments;
   }
 
   async getById(
     paymentId: string,
-    userId: string
+    userId: string,
+    companyId: string
   ): Promise<IPayment> {
     const payment = await PaymentModel.findOne({
       _id: paymentId,
+      company: companyId,
       $or: [{ landlord: userId }, { tenant: userId }],
     })
       .populate('tenant', 'name email phone')
@@ -142,55 +128,23 @@ export class PaymentService {
       .populate('unit', 'unitNumber floor')
       .populate('property', 'name address');
 
-    if (!payment) {
-      throw ApiError.notFound('الدفعة مش موجودة');
-    }
-
+    if (!payment) throw ApiError.notFound('الدفعة مش موجودة');
     return payment;
   }
 
-  async getSummary(landlordId: string): Promise<{
-    total: number;
-    paid: number;
-    pending: number;
-    overdue: number;
-    totalAmount: number;
-    paidAmount: number;
-    pendingAmount: number;
-    overdueAmount: number;
-  }> {
-    const payments = await PaymentModel.find({ landlord: landlordId });
+  async getSummary(landlordId: string, companyId: string) {
+    const payments = await PaymentModel.find({ landlord: landlordId, company: companyId });
 
-    const summary = payments.reduce(
+    return payments.reduce(
       (acc, payment) => {
         acc.total++;
         acc.totalAmount += payment.amount;
-
-        if (payment.status === 'paid') {
-          acc.paid++;
-          acc.paidAmount += payment.amount;
-        } else if (payment.status === 'pending') {
-          acc.pending++;
-          acc.pendingAmount += payment.amount;
-        } else if (payment.status === 'overdue') {
-          acc.overdue++;
-          acc.overdueAmount += payment.amount;
-        }
-
+        if (payment.status === 'paid') { acc.paid++; acc.paidAmount += payment.amount; }
+        else if (payment.status === 'pending') { acc.pending++; acc.pendingAmount += payment.amount; }
+        else if (payment.status === 'overdue') { acc.overdue++; acc.overdueAmount += payment.amount; }
         return acc;
       },
-      {
-        total: 0,
-        paid: 0,
-        pending: 0,
-        overdue: 0,
-        totalAmount: 0,
-        paidAmount: 0,
-        pendingAmount: 0,
-        overdueAmount: 0,
-      }
+      { total: 0, paid: 0, pending: 0, overdue: 0, totalAmount: 0, paidAmount: 0, pendingAmount: 0, overdueAmount: 0 }
     );
-
-    return summary;
   }
 }

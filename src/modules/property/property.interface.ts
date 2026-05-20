@@ -2,9 +2,10 @@ import { Document, Types } from 'mongoose';
 
 export interface IProperty extends Document {
   _id: Types.ObjectId;
+  company: Types.ObjectId;
   owner: Types.ObjectId;
   name: string;
-  description: string;
+  description?: string;
   address: {
     street: string;
     city: string;

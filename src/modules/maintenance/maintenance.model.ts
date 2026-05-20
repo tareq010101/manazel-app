@@ -3,6 +3,11 @@ import { IMaintenance } from './maintenance.interface';
 
 const maintenanceSchema = new Schema<IMaintenance>(
   {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'الشركة مطلوبة'],
+    },
     unit: {
       type: Schema.Types.ObjectId,
       ref: 'Unit',
@@ -45,20 +50,13 @@ const maintenanceSchema = new Schema<IMaintenance>(
       enum: ['pending', 'in_progress', 'completed', 'rejected'],
       default: 'pending',
     },
-    rejectionReason: {
-      type: String,
-      trim: true,
-    },
-    completedAt: {
-      type: Date,
-    },
+    rejectionReason: { type: String, trim: true },
+    completedAt: { type: Date },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export const MaintenanceModel = mongoose.model<IMaintenance>(
-  'Maintenance',
-  maintenanceSchema
-);
+maintenanceSchema.index({ company: 1, landlord: 1, status: 1 });
+maintenanceSchema.index({ company: 1, tenant: 1, status: 1 });
+
+export const MaintenanceModel = mongoose.model<IMaintenance>('Maintenance', maintenanceSchema);

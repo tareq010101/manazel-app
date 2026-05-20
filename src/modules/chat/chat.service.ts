@@ -4,22 +4,22 @@ import { ApiError } from '@shared/errors/ApiError';
 import { ContractModel } from '@modules/contract/contract.model';
 
 export class ChatService {
-  async getOrCreateChat(userId: string): Promise<IChat> {
+  async getOrCreateChat(userId: string, companyId: string): Promise<IChat> {
     const contract = await ContractModel.findOne({
       $or: [{ landlord: userId }, { tenant: userId }],
+      company: companyId,
       status: 'active',
     });
 
-    if (!contract) {
-      throw ApiError.notFound('مفيش عقد إيجار فعال');
-    }
+    if (!contract) throw ApiError.notFound('مفيش عقد إيجار فعال');
 
-    let chat = await ChatModel.findOne({ contract: contract._id });
+    let chat = await ChatModel.findOne({ contract: contract._id, company: companyId });
 
     if (!chat) {
       chat = await ChatModel.create({
         participants: [contract.landlord, contract.tenant],
         contract: contract._id,
+        company: companyId,
       });
     }
 
@@ -29,17 +29,17 @@ export class ChatService {
   async getMessages(
     chatId: string,
     userId: string,
+    companyId: string,
     page: number = 1,
     limit: number = 20
   ): Promise<{ messages: IMessage[]; total: number; pages: number }> {
     const chat = await ChatModel.findOne({
       _id: chatId,
+      company: companyId,
       participants: userId,
     });
 
-    if (!chat) {
-      throw ApiError.notFound('المحادثة مش موجودة');
-    }
+    if (!chat) throw ApiError.notFound('المحادثة مش موجودة');
 
     const skip = (page - 1) * limit;
     const total = await MessageModel.countDocuments({ chat: chatId });
@@ -55,32 +55,14 @@ export class ChatService {
       { isRead: true }
     );
 
-    return {
-      messages: messages.reverse(),
-      total,
-      pages: Math.ceil(total / limit),
-    };
+    return { messages: messages.reverse(), total, pages: Math.ceil(total / limit) };
   }
 
-  async sendMessage(
-    chatId: string,
-    senderId: string,
-    content: string
-  ): Promise<IMessage> {
-    const chat = await ChatModel.findOne({
-      _id: chatId,
-      participants: senderId,
-    });
+  async sendMessage(chatId: string, senderId: string, content: string): Promise<IMessage> {
+    const chat = await ChatModel.findOne({ _id: chatId, participants: senderId });
+    if (!chat) throw ApiError.notFound('المحادثة مش موجودة');
 
-    if (!chat) {
-      throw ApiError.notFound('المحادثة مش موجودة');
-    }
-
-    const message = await MessageModel.create({
-      chat: chatId,
-      sender: senderId,
-      content,
-    });
+    const message = await MessageModel.create({ chat: chatId, sender: senderId, content });
 
     await ChatModel.findByIdAndUpdate(chatId, {
       lastMessage: message._id,
@@ -90,16 +72,14 @@ export class ChatService {
     return message.populate('sender', 'name');
   }
 
-  async getUnreadCount(userId: string): Promise<number> {
-    const chats = await ChatModel.find({ participants: userId });
+  async getUnreadCount(userId: string, companyId: string): Promise<number> {
+    const chats = await ChatModel.find({ participants: userId, company: companyId });
     const chatIds = chats.map((c) => c._id);
 
-    const count = await MessageModel.countDocuments({
+    return MessageModel.countDocuments({
       chat: { $in: chatIds },
       sender: { $ne: userId },
       isRead: false,
     });
-
-    return count;
   }
 }

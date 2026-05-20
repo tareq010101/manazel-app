@@ -4,6 +4,7 @@ export type UnitStatus = 'available' | 'rented' | 'maintenance';
 
 export interface IUnit extends Document {
   _id: Types.ObjectId;
+  company: Types.ObjectId;
   property: Types.ObjectId;
   owner: Types.ObjectId;
   unitNumber: string;

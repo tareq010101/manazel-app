@@ -4,6 +4,7 @@ export type ContractStatus = 'active' | 'expired' | 'terminated';
 
 export interface IContract extends Document {
   _id: Types.ObjectId;
+  company: Types.ObjectId;
   unit: Types.ObjectId;
   property: Types.ObjectId;
   landlord: Types.ObjectId;

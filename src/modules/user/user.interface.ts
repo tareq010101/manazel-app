@@ -8,6 +8,7 @@ export interface IUser extends Document {
   password: string;
   phone: string;
   role: Role;
+  company?: Types.ObjectId;
   isActive: boolean;
   refreshToken?: string;
   createdAt: Date;

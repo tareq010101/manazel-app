@@ -3,6 +3,11 @@ import { IPayment } from './payment.interface';
 
 const paymentSchema = new Schema<IPayment>(
   {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'الشركة مطلوبة'],
+    },
     contract: {
       type: Schema.Types.ObjectId,
       ref: 'Contract',
@@ -42,9 +47,7 @@ const paymentSchema = new Schema<IPayment>(
       type: Date,
       required: [true, 'تاريخ الاستحقاق مطلوب'],
     },
-    paidAt: {
-      type: Date,
-    },
+    paidAt: { type: Date },
     status: {
       type: String,
       enum: ['pending', 'paid', 'overdue'],
@@ -56,12 +59,11 @@ const paymentSchema = new Schema<IPayment>(
       maxlength: [500, 'الملاحظة لازم تكون أقل من 500 حرف'],
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
-paymentSchema.index({ landlord: 1, status: 1 });
-paymentSchema.index({ tenant: 1, status: 1 });
-paymentSchema.index({ dueDate: 1, status: 1 });
+
+paymentSchema.index({ company: 1, landlord: 1, status: 1 });
+paymentSchema.index({ company: 1, tenant: 1, status: 1 });
+paymentSchema.index({ company: 1, dueDate: 1, status: 1 });
 
 export const PaymentModel = mongoose.model<IPayment>('Payment', paymentSchema);

@@ -5,15 +5,18 @@ import { initSocket } from '@config/socket';
 import { envConfig } from '@config/env';
 import { runCronJobs } from '@shared/utils/cron';
 import { logger } from '@shared/utils/logger';
+import { PlanService } from '@modules/plan/plan.service';
 
 const bootstrap = async (): Promise<void> => {
   try {
     await connectDB();
 
+    // إنشاء الخطط الافتراضية
+    const planService = new PlanService();
+    await planService.seedPlans();
+
     const httpServer = http.createServer(app);
-
     initSocket(httpServer);
-
     runCronJobs();
 
     httpServer.listen(envConfig.PORT, () => {

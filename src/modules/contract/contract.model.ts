@@ -3,6 +3,11 @@ import { IContract } from './contract.interface';
 
 const contractSchema = new Schema<IContract>(
   {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'الشركة مطلوبة'],
+    },
     unit: {
       type: Schema.Types.ObjectId,
       ref: 'Unit',
@@ -46,20 +51,14 @@ const contractSchema = new Schema<IContract>(
       enum: ['active', 'expired', 'terminated'],
       default: 'active',
     },
-    terminatedAt: {
-      type: Date,
-    },
-    terminationReason: {
-      type: String,
-      trim: true,
-    },
+    terminatedAt: { type: Date },
+    terminationReason: { type: String, trim: true },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
-contractSchema.index({ landlord: 1, status: 1 });
-contractSchema.index({ tenant: 1, status: 1 });
-contractSchema.index({ endDate: 1, status: 1 });
+
+contractSchema.index({ company: 1, landlord: 1, status: 1 });
+contractSchema.index({ company: 1, tenant: 1, status: 1 });
+contractSchema.index({ company: 1, endDate: 1, status: 1 });
 
 export const ContractModel = mongoose.model<IContract>('Contract', contractSchema);

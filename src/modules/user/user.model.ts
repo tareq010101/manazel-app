@@ -42,6 +42,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       select: false,
     },
+    company: {
+  type: Schema.Types.ObjectId,
+  ref: 'Company',
+},
   },
   {
     timestamps: true,

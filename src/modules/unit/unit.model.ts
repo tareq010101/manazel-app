@@ -3,6 +3,11 @@ import { IUnit } from './unit.interface';
 
 const unitSchema = new Schema<IUnit>(
   {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'الشركة مطلوبة'],
+    },
     property: {
       type: Schema.Types.ObjectId,
       ref: 'Property',
@@ -58,9 +63,10 @@ const unitSchema = new Schema<IUnit>(
       default: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
+unitSchema.index({ company: 1, property: 1 });
+unitSchema.index({ company: 1, status: 1 });
 
 export const UnitModel = mongoose.model<IUnit>('Unit', unitSchema);

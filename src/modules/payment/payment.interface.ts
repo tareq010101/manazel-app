@@ -5,6 +5,7 @@ export type PaymentStatus = 'pending' | 'paid' | 'overdue';
 
 export interface IPayment extends Document {
   _id: Types.ObjectId;
+  company: Types.ObjectId;
   contract: Types.ObjectId;
   unit: Types.ObjectId;
   property: Types.ObjectId;

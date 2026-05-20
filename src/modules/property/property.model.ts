@@ -3,6 +3,11 @@ import { IProperty } from './property.interface';
 
 const propertySchema = new Schema<IProperty>(
   {
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'الشركة مطلوبة'],
+    },
     owner: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -46,5 +51,9 @@ const propertySchema = new Schema<IProperty>(
     timestamps: true,
   }
 );
+
+// ← شيل الـ import اللي مش بتستخدمه ICompany
+propertySchema.index({ company: 1, owner: 1 });
+propertySchema.index({ company: 1, isActive: 1 });
 
 export const PropertyModel = mongoose.model<IProperty>('Property', propertySchema);
